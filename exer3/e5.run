@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+PATH=.
+
+numeris="$1"
+file="$2"
+
+if [ -z "$numeris" ]
+then
+echo "Skaicius negali buti tuscias"
+exit 0
+fi
+
+if [ -z "$file" ]
+then
+echo "Failo pavadinimas negali buti tuscias"
+exit 0
+fi
+
+if [ -f "$file" ]
+then
+echo "Failas yra"
+echo
+else
+echo "Failas neegzistuoja"
+exit 0
+fi
+
+while IFS= read -r line
+    do
+    echo "$line"
+done < $file
+echo
+
+while IFS= read -r line; do
+    words=($line)
+
+    for (( i=0; i<${#words[@]}; i++ )); do
+        reversed_word=""
+        for (( j=${#words[i]}-1; j>=0; j-- )); do
+            reversed_word+="${words[i]:$j:1}"
+        done
+
+        if (( ++word_count % numeris == 0 )); then
+            last_char="${reversed_word: -1}"
+            last_char="${last_char^}"
+            reversed_word="${reversed_word:0:-1}$last_char"
+        fi
+
+        echo -n "$reversed_word "
+    done
+
+    echo
+
+    for (( i=$(($numeris-1)); i<${#words[@]}; i+=$numeris )); do
+        echo "${words[i]}"
+    done
+done < "$file"

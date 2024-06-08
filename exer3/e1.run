@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+PATH=.
+
+file="$1"
+
+if [ -z "$file" ]
+then
+echo "Failo pavadinimas negali buti tuscias"
+exit 0
+fi
+
+if [ -f "$file" ]
+then
+echo "Failas yra"
+echo
+else 
+echo "Failas neegzistuoja"
+exit 0
+fi
+
+ar_sutampa=-1
+eilutes=0
+masyvas=()
+
+while IFS= read -r eilute
+do
+turi_kabutes=false
+stulpeliu_kiekis=0
+masyvas=()
+
+for (( i = 0; i < ${#eilute}; i++ ))
+do
+char="${eilute:$i:1}"
+
+if [[ "$char" == '"' ]]
+then
+turi_kabutes=true
+fi
+
+if [[ "$char" == " " && "$turi_kabutes" == false ]]
+then
+masyvas+=("$column")
+kabutes=""
+fi
+
+column+="$char"
+done
+
+masyvas+=("$kabutes")
+
+((eilutes++))
+
+echo "Eilute $((eilutes)) turi ${#masyvas[*]} stulpelius"
+
+if [[ "$ar_sutampa" -eq -1 ]]
+then
+ar_sutampa=${#masyvas[@]}
+fi
+
+if [[ ${#masyvas[@]} -ne "$ar_sutampa" ]]
+then
+echo "Netinkamas stulpeliu kiekis eiluteje: $eilutes"
+echo
+fi
+
+done < "$file"

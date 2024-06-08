@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+PATH=.
+
+echo "Iveskite failo pavadinima"
+read file
+
+if [ -z "$file" ]
+then
+echo "Failo pavadinimas negali buti tuscias"
+exit 0
+fi
+
+if [ -f "$file" ]
+then
+echo "Failas yra"
+echo
+else
+echo "Failas neegzistuoja"
+exit 0
+fi
+
+
+while IFS= read -r line; do
+    echo "$line"
+done < "$file"
+
+
+words=()
+positions=()
+pos=0
+
+while IFS=' ' read -r -a line_words; do
+    for word in "${line_words[@]}"; do
+        word_lower="${word,,}"
+
+        if [[ ! " ${words[@]} " =~ " $word_lower " ]]; then
+            words+=("$word_lower")
+            positions+=("$((pos + 1))")
+        fi
+        pos=$((pos + ${#word} + 1))
+    done
+done < "$file"
+
+
+num_unique_words=${#words[@]}
+echo "Number of unique words: $num_unique_words"
+
+for word in "${words[@]}"; do
+    echo "Word: $word"
+done
+
+for ((i = 0; i < num_unique_words - 1; i++)); do
+    space=$((positions[i + 1] - positions[i] - ${#words[i]}))
+    echo "Space between ${words[i]} and ${words[i + 1]}: $space"
+done
