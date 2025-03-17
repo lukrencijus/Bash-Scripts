@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+PATH=.
+
+if [ -z "$1" ]; then
+        echo "Usage: $0 <file.csv>"
+        exit 1
+fi
+
+if [ ! -f "$1" ]; then
+        echo "File not found"
+        echo "Usage: $0 <file.csv>"
+        exit 1
+fi
+
+
+file=$1
+columns=0
+rows=-1
+
+# 1.  Need to ignore "
+
+while IFS= read -r line; do
+        (( rows++ ))
+        echo "$rows row: $line"
+done < $file
+
+read -r firstline<$file
+echo "First line: $firstline"
+
+array=(${firstline//,/ })
+columns=${#array[@]}
+
+echo "Number of columns: $columns"
+echo "Number of rows (excluding the header): $rows"
