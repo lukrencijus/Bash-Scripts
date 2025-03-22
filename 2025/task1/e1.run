@@ -12,23 +12,27 @@ if [ ! -f "$1" ]; then
         exit 1
 fi
 
-
 file=$1
-columns=0
 rows=-1
-
-# 1.  Need to ignore "
 
 while IFS= read -r line; do
         (( rows++ ))
-        echo "$rows row: $line"
+        echo "$line"
 done < $file
+echo
 
-read -r firstline<$file
-echo "First line: $firstline"
-
-array=(${firstline//,/ })
-columns=${#array[@]}
-
-echo "Number of columns: $columns"
 echo "Number of rows (excluding the header): $rows"
+echo
+
+rows=-1
+
+while IFS= read -r line; do
+        (( rows++ ))
+        array=($line)
+        current_columns=${#array[@]}
+
+        if [ "$rows" -eq 0 ]; then
+                echo "H row columns: $current_columns"
+                header_columns="$current_columns"
+        else
+                echo "$rows row columns: $current_columns"
