@@ -15,7 +15,7 @@ fi
 file=$1
 rows=-1
 
-while IFS= read -r line; do
+while read line; do
         (( rows++ ))
         echo "$line"
 done < $file
@@ -26,9 +26,9 @@ echo
 
 rows=-1
 
-while IFS= read -r line; do
+while read line; do
         (( rows++ ))
-        array=($line)
+        eval "array=($line)"
         current_columns=${#array[@]}
 
         if [ "$rows" -eq 0 ]; then
@@ -36,3 +36,9 @@ while IFS= read -r line; do
                 header_columns="$current_columns"
         else
                 echo "$rows row columns: $current_columns"
+
+                if [ "$current_columns" -ne "$header_columns" ]; then
+                        echo "Warning: Row $rows has different number of>
+                fi
+        fi
+done < "$file"
