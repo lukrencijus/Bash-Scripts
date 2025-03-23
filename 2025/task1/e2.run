@@ -24,34 +24,43 @@ sentences=()
 unique_sentences=()
 
 while IFS= read -r -d '.' sentence; do
-    if [ -n "${sentence// }" ]; then
+    sentence="${sentence#"${sentence%%[![:space:]]*}"}"
+    sentence="${sentence%"${sentence##*[![:space:]]}"}"
+    
+    if [ -n "$sentence" ]; then
         sentences+=("$sentence")
     fi
 done < "$text_file"
 
-if [ -n "${sentence// }" ]; then
-    sentences+=("$sentence")
+if [ -n "$sentence" ]; then
+    sentence="${sentence#"${sentence%%[![:space:]]*}"}"
+    sentence="${sentence%"${sentence##*[![:space:]]}"}"
+    
+    if [ -n "$sentence" ]; then
+        sentences+=("$sentence")
+    fi
 fi
 
 total=${#sentences[@]}
 
 for ((i=0; i<$total; i++)); do
-        sentence="${sentences[$i]}"
-        is_unique=true
-        
-        for ((j=0; j<i; j++)); do
-            prev_sentence="${sentences[$j]}"
-            if [ "$sentence" = "$prev_sentence" ]; then
-                is_unique=false
-                break
-            fi
-        done
-        
-        if [ "$is_unique" = true ]; then
-            unique_sentences+=("$sentence")
+    sentence="${sentences[$i]}"
+    is_unique=true
+    
+    for ((j=0; j<i; j++)); do
+        prev_sentence="${sentences[$j]}"
+        if [ "$sentence" = "$prev_sentence" ]; then
+            is_unique=false
+            break
         fi
+    done
+    
+    if [ "$is_unique" = true ]; then
+        unique_sentences+=("$sentence")
+    fi
 done
 
-for ((i=0; i<$total; i++)); do
+unique_count=${#unique_sentences[@]}
+for ((i=0; i<$unique_count; i++)); do
     echo "Sentence $((i+1)): ${unique_sentences[$i]}"
 done
