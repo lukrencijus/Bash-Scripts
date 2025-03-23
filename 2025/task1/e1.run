@@ -2,20 +2,20 @@
 PATH=.
 
 if [ -z "$1" ]; then
-        echo "Usage: $0 <file.csv>"
-        exit 1
+	echo "Usage: $0 <file.csv>"
+	exit 1
 fi
 
 if [ ! -f "$1" ]; then
-        echo "File not found"
-        echo "Usage: $0 <file.csv>"
-        exit 1
+    	echo "File not found"
+	echo "Usage: $0 <file.csv>"
+	exit 1
 fi
 
 file=$1
 rows=-1
 
-while read line; do
+while IFS= read -r line || [ -n "$line" ]; do
         (( rows++ ))
         echo "$line"
 done < $file
@@ -26,19 +26,19 @@ echo
 
 rows=-1
 
-while read line; do
-        (( rows++ ))
-        eval "array=($line)"
-        current_columns=${#array[@]}
+while IFS= read -r line || [ -n "$line" ]; do
+	(( rows++ ))
+	eval "array=($line)"
+	current_columns=${#array[@]}
 
-        if [ "$rows" -eq 0 ]; then
-                echo "H row columns: $current_columns"
-                header_columns="$current_columns"
-        else
-                echo "$rows row columns: $current_columns"
+	if [ "$rows" -eq 0 ]; then
+		echo "H row columns: $current_columns"
+		header_columns="$current_columns"
+	else
+		echo "$rows row columns: $current_columns"
 
-                if [ "$current_columns" -ne "$header_columns" ]; then
-                        echo "Warning: Row $rows has different number of>
-                fi
-        fi
+		if [ "$current_columns" -ne "$header_columns" ]; then
+			echo "Warning: Row $rows has different number of columns than header"
+		fi
+	fi
 done < "$file"
