@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+PATH=.
+
+if [ "$#" -ne 2 ]; then
+    echo "Usage: $0 <text_file> <nouns_file>"
+    exit 1
+fi
+
+if [ ! -f "$1" ]; then
+    echo "File $1 not found"
+    echo "Usage: $0 <text_file> <nouns_file>"
+    exit 1
+fi
+
+if [ ! -f "$2" ]; then
+    echo "File $2 not found"
+    echo "Usage: $0 <text_file> <nouns_file>"
+    exit 1
+fi
+
+text_file="$1"
+nouns_file="$2"
+sentences=()
+unique_sentences=()
+
+while IFS= read -r -d '.' sentence; do
+    if [ -n "${sentence// }" ]; then
+        sentences+=("$sentence")
+    fi
+done < "$text_file"
+
+if [ -n "${sentence// }" ]; then
+    sentences+=("$sentence")
+fi
+
+total=${#sentences[@]}
+
+for ((i=0; i<$total; i++)); do
+        sentence="${sentences[$i]}"
+        is_unique=true
+        
+        for ((j=0; j<i; j++)); do
+            prev_sentence="${sentences[$j]}"
+            if [ "$sentence" = "$prev_sentence" ]; then
+                is_unique=false
+                break
+            fi
+        done
+        
+        if [ "$is_unique" = true ]; then
+            unique_sentences+=("$sentence")
+        fi
+done
+
+for ((i=0; i<$total; i++)); do
+    echo "Sentence $((i+1)): ${unique_sentences[$i]}"
+done

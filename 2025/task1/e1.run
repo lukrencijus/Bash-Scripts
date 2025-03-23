@@ -12,7 +12,7 @@ if [ ! -f "$1" ]; then
 	exit 1
 fi
 
-file=$1
+file="$1"
 rows=-1
 
 echo "FILE:"
@@ -42,7 +42,7 @@ while IFS= read -r line || [ -n "$line" ]; do
 		echo "$rows row columns: $current_columns"
 
 		if [ "$current_columns" -ne "$header_columns" ]; then
-			echo "  Warning: $rows row has different number of columns than header row"
+			echo "  Warning: different number of columns than header row"
 		fi
 	fi
 done < "$file"
@@ -92,4 +92,3 @@ while IFS= read -r line || [ -n "$line" ]; do
     echo "------------------------------------------------"
 
 done < "$file"
-
