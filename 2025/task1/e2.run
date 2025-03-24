@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 PATH=.
 
+export LANG=lt_LT.UTF-8
+
 shopt -s extglob
 
 if [ "$#" -ne 2 ]; then
@@ -20,51 +22,44 @@ if [ ! -f "$2" ]; then
     exit 1
 fi
 
+if [ ! -s "$1" ]; then
+    echo "Error: File $1 is empty."
+    exit 1
+fi
+
+if [ ! -s "$2" ]; then
+    echo "Error: File $2 is empty."
+    exit 1
+fi
+
 text_file="$1"
 nouns_file="$2"
 sentences=()
 unique_sentences=()
 
-# 1-----------------------------------------------------------------------------------------
-content=$(<"$text_file")
+while IFS= read -n 1 char; do
+  sentence="${sentence}${char}"
 
-IFS='.!?' original_sentences=($content)
-
-sentences=()
-
-for sentence in "${original_sentences[@]}"; do
+  if [[ "$char" == "." || "$char" == "!" || "$char" == "?" ]]; then
+    sentence="${sentence::-1}"
     sentence="${sentence##+([[:space:]])}"
     sentence="${sentence%%+([[:space:]])}"
 
     if [ -n "$sentence" ]; then
+      sentences+=("$sentence")
+    fi
+
+    sentence=""
+  fi
+done < "$text_file"
+
+if [ -n "$sentence" ]; then
+    sentence="${sentence##+([[:space:]])}"
+    sentence="${sentence%%+([[:space:]])}"
+    if [ -n "$sentence" ]; then
         sentences+=("$sentence")
     fi
-done
-# 1-----------------------------------------------------------------------------
-
-# 2-----------------------------------------------------------------------------------------
-# while IFS= read -n 1 char; do
-#   sentence="${sentence}${char}"
-
-#   if [[ "$char" == "." || "$char" == "!" || "$char" == "?" ]]; then
-#     sentence="${sentence::-1}"
-#     sentence="${sentence##+([[:space:]])}"
-#     sentence="${sentence%%+([[:space:]])}"
-
-#     if [ -n "$sentence" ]; then
-#       sentences+=("$sentence")
-#     fi
-
-#     sentence=""
-#   fi
-# done < "$text_file"
-
-# if [ -n "$sentence" ]; then
-#     sentence="${sentence##+([[:space:]])}"
-#     sentence="${sentence%%+([[:space:]])}"
-#     sentences+=("$sentence")
-# fi
-# 2-----------------------------------------------------------------------------
+fi
 
 total=${#sentences[@]}
 
@@ -85,7 +80,40 @@ for ((i=0; i<$total; i++)); do
     fi
 done
 
+nouns=()
+
+while IFS= read -r line; do
+    line_lower="${line,,}"
+    for word in $line_lower; do
+        if [ -n "$word" ]; then
+            word=${word//[;,]/}
+            nouns+=("$word")
+        fi
+    done
+done < "$nouns_file"
+
+if [ -n "$line" ]; then
+    line_lower="${line,,}"
+    for word in $line_lower; do
+        word=${word//[;,]/}
+        nouns+=("$word")
+    done
+fi
+
 unique_count=${#unique_sentences[@]}
-for ((i=0; i<$unique_count; i++)); do
-    echo "Sentence $((i+1)): ${unique_sentences[$i]}"
+for ((i = 0; i < unique_count; i++)); do
+    count=0
+    sentence_lower="${unique_sentences[$i],,}"
+
+    for word in $sentence_lower; do
+        for noun in "${nouns[@]}"; do
+            if [ "$word" = "$noun" ]; then
+                ((count++))
+            fi
+        done
+    done
+
+    echo "Sentence $((i + 1)): ${unique_sentences[$i]}"
+    echo "Noun count: $count"
+    echo "------------------------------------------"
 done
