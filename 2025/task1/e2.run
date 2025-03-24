@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 PATH=.
 
+shopt -s extglob
+
 if [ "$#" -ne 2 ]; then
     echo "Usage: $0 <text_file> <nouns_file>"
     exit 1
@@ -23,23 +25,46 @@ nouns_file="$2"
 sentences=()
 unique_sentences=()
 
-while IFS= read -r -d '.' sentence; do
-    sentence="${sentence#"${sentence%%[![:space:]]*}"}"
-    sentence="${sentence%"${sentence##*[![:space:]]}"}"
-    
-    if [ -n "$sentence" ]; then
-        sentences+=("$sentence")
-    fi
-done < "$text_file"
+# 1-----------------------------------------------------------------------------------------
+content=$(<"$text_file")
 
-if [ -n "$sentence" ]; then
-    sentence="${sentence#"${sentence%%[![:space:]]*}"}"
-    sentence="${sentence%"${sentence##*[![:space:]]}"}"
-    
+IFS='.!?' original_sentences=($content)
+
+sentences=()
+
+for sentence in "${original_sentences[@]}"; do
+    sentence="${sentence##+([[:space:]])}"
+    sentence="${sentence%%+([[:space:]])}"
+
     if [ -n "$sentence" ]; then
         sentences+=("$sentence")
     fi
-fi
+done
+# 1-----------------------------------------------------------------------------
+
+# 2-----------------------------------------------------------------------------------------
+# while IFS= read -n 1 char; do
+#   sentence="${sentence}${char}"
+
+#   if [[ "$char" == "." || "$char" == "!" || "$char" == "?" ]]; then
+#     sentence="${sentence::-1}"
+#     sentence="${sentence##+([[:space:]])}"
+#     sentence="${sentence%%+([[:space:]])}"
+
+#     if [ -n "$sentence" ]; then
+#       sentences+=("$sentence")
+#     fi
+
+#     sentence=""
+#   fi
+# done < "$text_file"
+
+# if [ -n "$sentence" ]; then
+#     sentence="${sentence##+([[:space:]])}"
+#     sentence="${sentence%%+([[:space:]])}"
+#     sentences+=("$sentence")
+# fi
+# 2-----------------------------------------------------------------------------
 
 total=${#sentences[@]}
 
