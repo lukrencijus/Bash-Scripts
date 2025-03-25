@@ -38,25 +38,38 @@ sentences=()
 unique_sentences=()
 
 while IFS= read -n 1 char; do
-  sentence="${sentence}${char}"
+    sentence="${sentence}${char}"
 
-  if [[ "$char" == "." || "$char" == "!" || "$char" == "?" ]]; then
-    sentence="${sentence::-1}"
-    sentence="${sentence##+([[:space:]])}"
-    sentence="${sentence%%+([[:space:]])}"
+    if [[ "$char" == "." || "$char" == "!" || "$char" == "?" ]]; then
+        
+        prev_char="${sentence: -2:1}"
+        if [[ "$prev_char" =~ [A-Z] ]]; then
+            continue
+        fi
 
-    if [ -n "$sentence" ]; then
-      sentences+=("$sentence")
+        if IFS= read -n 2 next_chars; then
+            if [[ "${next_chars:1:1}" =~ [a-z] ]]; then
+                sentence="${sentence}${next_chars}"
+                continue
+            fi
+        fi
+
+        sentence="${sentence##+([[:space:]])}"
+        sentence="${sentence%%+([[:space:]])}"
+        sentence="${sentence::-1}"
+
+        if [[ -n "$sentence" && "$sentence" != [.!?] ]]; then
+            sentences+=("$sentence")
+        fi
+        
+        sentence="${next_chars:1:1}"
     fi
-
-    sentence=""
-  fi
 done < "$text_file"
 
-if [ -n "$sentence" ]; then
+if [[ -n "$sentence" && "$sentence" != [.!?] ]]; then
     sentence="${sentence##+([[:space:]])}"
     sentence="${sentence%%+([[:space:]])}"
-    if [ -n "$sentence" ]; then
+    if [[ -n "$sentence" && "$sentence" != [.!?] ]]; then
         sentences+=("$sentence")
     fi
 fi
