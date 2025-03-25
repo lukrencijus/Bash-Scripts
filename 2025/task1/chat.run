@@ -1,0 +1,101 @@
+#!/usr/bin/env bash
+
+if [ "$#" -lt 2 ]; then
+    echo "Usage: $0 <file.json> <key1.key2[.key3...]>"
+    exit 1
+fi
+
+json_file="$1"
+key_path="$2"
+
+if [ ! -f "$json_file" ]; then
+    echo "File not found: $json_file"
+    exit 1
+fi
+
+# Read the JSON file content
+json_content=$(<"$json_file")
+
+# Remove newlines and extra spaces to simplify
+json_content=${json_content//[$'\t\r\n ']/}
+
+# Split the key path
+IFS='.' read -r -a keys <<< "$key_path"
+
+# Navigate through keys
+for key in "${keys[@]}"; do
+    # Find the position of the key pattern
+    key_pattern="\"$key\":"
+    if [[ ! "$json_content" == *"$key_pattern"* ]]; then
+        echo "Key not found: $key"
+        exit 1
+    fi
+    
+    # Extract everything after the key
+    json_content=${json_content#*"$key_pattern"}
+    
+    # Check if we're at the last key
+    if [[ "$key" == "${keys[-1]}" ]]; then
+        break
+    fi
+    
+    # Extract the object if we need to continue deeper
+    if [[ "${json_content:0:1}" == "{" ]]; then
+        open_braces=1
+        close_index=1
+        
+        while [[ $open_braces -gt 0 && $close_index -lt ${#json_content} ]]; do
+            char="${json_content:$close_index:1}"
+            
+            if [[ "$char" == "{" ]]; then
+                ((open_braces++))
+            elif [[ "$char" == "}" ]]; then
+                ((open_braces--))
+            fi
+            
+            ((close_index++))
+        done
+        
+        json_content="${json_content:0:$close_index}"
+    fi
+done
+
+# Format output based on the value type
+if [[ "${json_content:0:1}" == "{" ]]; then
+    # It's an object
+    # Add line breaks for readability
+    result=""
+    indent=""
+    open_braces=0
+    
+    for ((i=0; i<${#json_content}; i++)); do
+        char="${json_content:$i:1}"
+        
+        if [[ "$char" == "{" ]]; then
+            ((open_braces++))
+            result+="$char"
+            indent+="  "
+            result+=$'\n'"$indent"
+        elif [[ "$char" == "}" ]]; then
+            ((open_braces--))
+            indent="${indent:0:-2}"
+            result+=$'\n'"$indent""$char"
+        elif [[ "$char" == "," ]]; then
+            result+="$char"$'\n'"$indent"
+        else
+            result+="$char"
+        fi
+    done
+    
+    echo "$result"
+elif [[ "${json_content:0:1}" == "\"" ]]; then
+    # It's a string - remove quotes
+    value=${json_content#\"}
+    value=${value%%\"*}
+    echo "$value"
+else
+    # It's a primitive value (number, boolean, null)
+    value=${json_content%%,*}
+    value=${value%%\}*}
+    echo "$value"
+fi

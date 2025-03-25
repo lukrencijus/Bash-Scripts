@@ -1,3 +1,50 @@
 #!/usr/bin/env bash
 PATH=.
 
+if [ "$#" -ne 2 ]; then
+    echo "Usage: $0 <file.json> <key1.key2[.key3...]> (f.x., person.name)"
+    exit 1
+fi
+
+if [ ! -f "$1" ]; then
+    echo "File not found"
+	echo "Usage: $0 <file.json>"
+	exit 1
+fi
+
+json_file="$1"
+key_path="$2"
+
+buffer=""
+key_found=0
+
+IFS='.' read -r -a keys <<< "$key_path"
+for key in "${keys[@]}"; do
+    echo "$key"
+done
+
+while IFS= read -r -n 1 char; do
+    buffer+="$char"
+
+    for key in "${keys[@]}"; do
+        if [[ "$buffer" =~ \"$key\"[[:space:]]*: ]]; then
+            key_found=1
+            buffer=""
+
+            while IFS= read -r -n 1 char_after; do
+                buffer+="$char_after"
+
+                # if [[ "$char_after" == '}' || "$char_after" == ',' ]]; then
+                if [[ "$char_after" == '}' ]]; then
+                    echo "Value for key '$key': $buffer"
+                    exit 0
+                fi
+            done
+        fi
+    done
+done < "$json_file"
+
+if [[ $key_found -eq 0 ]]; then
+    echo "Key not found: $key_path"
+    exit 1
+fi

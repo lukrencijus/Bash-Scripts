@@ -1,0 +1,21 @@
+{
+  "person": {
+    "details": {
+      "name": "Alice",
+      "age": 30,
+      "address": {
+        "city": "New York",
+        "zip": "10001"
+      }
+    }
+  },
+  "other": {
+    "info": {
+      "name": "Bob",
+      "contact": {
+        "email": "bob@example.com",
+        "phone": "123-456-7890"
+      }
+    }
+  }
+}

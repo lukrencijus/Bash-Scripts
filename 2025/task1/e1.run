@@ -7,7 +7,7 @@ if [ -z "$1" ]; then
 fi
 
 if [ ! -f "$1" ]; then
-    	echo "File not found"
+    echo "File not found"
 	echo "Usage: $0 <file.csv>"
 	exit 1
 fi
