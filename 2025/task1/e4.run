@@ -1,22 +1,30 @@
 #!/usr/bin/env bash
 PATH=.
 
-# if [ "$#" -eq 0 ]; then
-#     echo "Usage: $0 <directory> <parameters>
-#     <directory>   (Mandatory) Catalog path from where to start to.
-#     -a            All files are listed. if not specified, hidden files and catalogues are not listed.
-#     -d            List directories only.
-#     -l            Follow symbolic links like directories.
-#     -f            Print the full path prefix for each file.
-#     -L level      Descend only level directories deep.
-#     -R            Rerun the tree when the max dir level is reached (restart your tree program as a child in the level).
-#     -P pattern    List only those files that match the pattern given.
-#     -I pattern    Do not list files that match the given pattern.
-#     -h            Help (this message)."
-#     exit 1
-# fi
+help_function() {
+    echo "Usage: $0 <directory> <parameters>
+    <directory>   (Mandatory) Catalog path from where to start to.
+    -a            All files are listed. if not specified, hidden files and catalogues are not listed.
+    -d            List directories only.
+    -l            Follow symbolic links like directories.
+    -f            Print the full path prefix for each file.
+    -L level      Descend only level directories deep.
+    -R            Rerun the tree when the max dir level is reached (restart your tree program as a child in the level).
+    -P pattern    List only those files that match the pattern given.
+    -I pattern    Do not list files that match the given pattern.
+    -h            Help (this message)."
+}
 
+if [ "$#" -eq 0 ]; then
+    help_function
+    exit 1
+fi
 
+path=$1
+
+if [ ! -e "$path" ]; then
+    echo "Path: $path does not exist"
+fi
 
 a_flag=false
 d_flag=false
@@ -28,9 +36,8 @@ P_value=""
 I_value=""
 h_flag=false
 
-
-while [[ "$#" -gt 0 ]]; do
-    if [[ "$1" =~ ^-([a-zA-Z]+)$ ]]; then
+while [[ "$#" -gt 1 ]]; do
+    if [[ "$2" =~ ^-([a-zA-Z]+)$ ]]; then
         combined_flags="${BASH_REMATCH[1]}"
         for (( i=0; i<${#combined_flags}; i++ )); do
             flag="${combined_flags:$i:1}"
@@ -40,8 +47,8 @@ while [[ "$#" -gt 0 ]]; do
                 l) l_flag=true ;;
                 f) f_flag=true ;;
                 L) 
-                    if [[ "$#" -gt 1 && ! "$2" =~ ^- ]]; then
-                        L_value="$2"
+                    if [[ "$#" -gt 2 && ! "$3" =~ ^- ]]; then
+                        L_value="$3"
                         shift
                     else
                         echo "Error: -L requires a level parameter."
@@ -50,8 +57,8 @@ while [[ "$#" -gt 0 ]]; do
                     ;;
                 R) R_flag=true ;;
                 P) 
-                    if [[ "$#" -gt 1 && ! "$2" =~ ^- ]]; then
-                        P_value="$2"
+                    if [[ "$#" -gt 2 && ! "$3" =~ ^- ]]; then
+                        P_value="$3"
                         shift
                     else
                         echo "Error: -P requires a pattern parameter."
@@ -60,18 +67,17 @@ while [[ "$#" -gt 0 ]]; do
                     ;;
                 h) h_flag=true ;;
                 I) 
-                    if [[ "$#" -gt 1 && ! "$2" =~ ^- ]]; then
-                        I_value="$2"
+                    if [[ "$#" -gt 2 && ! "$3" =~ ^- ]]; then
+                        I_value="$3"
                         shift
                     else
                         echo "Error: -I requires a pattern parameter."
                         exit 1
                     fi
                     ;;
-
-
                 *) 
                     echo "Unknown flag: -$flag"
+                    help_function
                     exit 1
                     ;;
             esac
@@ -93,14 +99,13 @@ echo "P_value: $P_value"
 echo "I_value: $I_value"
 echo "h_flag: $h_flag"
 
-path=$1
-
-if [ -e "path" ]; then
-    echo "Path exists."
+if [ -d "$path" ]; then # Check if $path is a directory
+    for file in "$path"/*; do
+        if [ -f "$file" ]; then
+            echo "$file"
+        fi
+    done
+else
+    echo "$path is not a directory"
+    exit 1
 fi
-
-for file in *; do
-  if [ -f "$file" ]; then
-    echo "$file"
-  fi
-done
