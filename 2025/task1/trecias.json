@@ -1,21 +1,22 @@
 {
   "person": {
-    "details": {
-      "name": "Alice",
-      "age": 30,
-      "address": {
-        "city": "New York",
-        "zip": "10001"
+    "name": "John Doe",
+    "age": 30,
+    "children": [
+      {
+        "name": "Jane Doe",
+        "age": 10
+      },
+      {
+        "name": "Jack Doe",
+        "age": 8
       }
-    }
-  },
-  "other": {
-    "info": {
-      "name": "Bob",
-      "contact": {
-        "email": "bob@example.com",
-        "phone": "123-456-7890"
-      }
+    ],
+    "address": {
+      "name": "Home Address",
+      "street": "123 Main St",
+      "city": "New York",
+      "zip": "10001"
     }
   }
 }

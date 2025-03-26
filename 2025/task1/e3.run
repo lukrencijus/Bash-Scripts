@@ -2,7 +2,10 @@
 PATH=.
 
 if [ "$#" -ne 2 ]; then
-    echo "Usage: $0 <file.json> <key1.key2[.key3...]> (f.x., person.name)"
+    echo "Usage:>"
+    echo "Example 1: $0 <file.json> -k <person.name>"
+    echo "Example 2: $0 <file.json> -d <data>"
+    echo "Example 3: $0 <file.json> -k <person.name> -d <data>"
     exit 1
 fi
 
@@ -15,8 +18,11 @@ fi
 json_file="$1"
 key_path="$2"
 
+# Also we need to account for data
+
 buffer=""
 key_found=0
+ignore=0
 
 IFS='.' read -r -a keys <<< "$key_path"
 for key in "${keys[@]}"; do
@@ -29,15 +35,33 @@ while IFS= read -r -n 1 char; do
     for key in "${keys[@]}"; do
         if [[ "$buffer" =~ \"$key\"[[:space:]]*: ]]; then
             key_found=1
-            buffer=""
 
-            while IFS= read -r -n 1 char_after; do
+            for ((i = 0; i < ${#buffer}; i++)); do
+                substring="${buffer:i}"
+                if [[ "$substring" == \"${key}\"* ]]; then
+                    buffer="$substring"
+                    break
+                fi
+            done
+
+                while IFS= read -r -n 1 char_after; do
                 buffer+="$char_after"
 
-                # if [[ "$char_after" == '}' || "$char_after" == ',' ]]; then
-                if [[ "$char_after" == '}' ]]; then
-                    echo "Value for key '$key': $buffer"
-                    exit 0
+                if [ "$char_after" == '{' ] || [ "$char_after" == '[' ]; then
+                    ((ignore++))
+                elif [ "$char_after" == '}' ] || [ "$char_after" == ']' ]; then
+                    ((ignore--))
+                    if [ "$ignore" -eq 0 ]; then
+                        echo "$buffer"
+                        exit 0
+                    fi
+                fi
+
+                if [[ "$char_after" == '}' || "$char_after" == ',' || "$char_after" == ']' ]]; then
+                    if [ "$ignore" -eq 0 ]; then
+                        echo "$buffer"
+                        exit 0
+                    fi
                 fi
             done
         fi
