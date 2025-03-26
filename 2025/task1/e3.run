@@ -1,22 +1,66 @@
 #!/usr/bin/env bash
 PATH=.
 
-if [ "$#" -ne 2 ]; then
+if [ "$#" -ne 3 ]; then
     echo "Usage:"
-    echo "Example 1: $0 <file.json> -k <person.name>"
-    echo "Example 2: $0 <file.json> -d <data>"
-    echo "Example 3: $0 <file.json> -k <person.name> -d <data>"
+    echo "Example 1: $0 <file.json> -k <person>"
+    echo "Example 2: $0 <file.json> -k <person.name>"
+    echo "Example 3: $0 <file.json> -d <data>"
     exit 1
 fi
 
 if [ ! -f "$1" ]; then
     echo "File not found"
-	echo "Usage: $0 <file.json>"
 	exit 1
 fi
 
 json_file="$1"
-path="$2"
+shift
+
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        -k) path="$2"; shift 2;;
+        -d) data="$2"; shift 2;;
+        *) echo "Unknown parameter: $1"
+            echo "Usage:"
+            echo "Example 1: $0 <file.json> -k <person>"
+            echo "Example 2: $0 <file.json> -k <person.name>"
+            echo "Example 3: $0 <file.json> -d <data>"; exit 1;;
+    esac
+done
+
+data_found=0
+
+if [[ -n "$data" ]]; then
+    buffer=""
+    while IFS= read -r -n 1 char; do
+        buffer+="$char"
+        if [[ "$buffer" == *\"$data\"* ]] || [[ "$buffer" == *"$data"* && "$data" =~ ^[0-9]+$ ]]; then
+            local_buffer="${buffer//\"$data\"/}"
+            inside_quotes=""
+            found_first_quote=0
+            for ((i=${#local_buffer}-1; i>=0; i--)); do
+                current_char="${local_buffer:i:1}"
+                if [[ "$current_char" == '"' ]]; then
+                    if [[ $found_first_quote -eq 0 ]]; then
+                        found_first_quote=1
+                    else
+                        break
+                    fi
+                elif [[ $found_first_quote -eq 1 ]]; then
+                    inside_quotes="$current_char$inside_quotes"
+                fi
+            done
+
+            if [[ -n "$inside_quotes" ]]; then
+                echo "$inside_quotes: $data"
+            else
+                echo "Could not find enclosing quotes"
+            fi
+            exit 0
+        fi
+    done < "$json_file"
+fi
 
 IFS='.' read -ra path_parts <<< "$path"
 
@@ -61,7 +105,12 @@ while IFS= read -r -n 1 char; do
     fi
 done < "$json_file"
 
-if [[ $key_found -eq 0 ]]; then
+if [[ "$key_found" -eq 0 ]] && [[ -n "$path" ]]; then
     echo "Key not found: $path"
+    exit 1
+fi
+
+if [[ "$data_found" -eq 0 ]] && [[ -n "$data" ]]; then
+    echo "Data not found: $data"
     exit 1
 fi
