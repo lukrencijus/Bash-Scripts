@@ -2,7 +2,7 @@
 PATH=.
 
 if [ "$#" -ne 2 ]; then
-    echo "Usage:>"
+    echo "Usage:"
     echo "Example 1: $0 <file.json> -k <person.name>"
     echo "Example 2: $0 <file.json> -d <data>"
     echo "Example 3: $0 <file.json> -k <person.name> -d <data>"
@@ -16,59 +16,52 @@ if [ ! -f "$1" ]; then
 fi
 
 json_file="$1"
-key_path="$2"
+path="$2"
 
-# Also we need to account for data
+IFS='.' read -ra path_parts <<< "$path"
 
 buffer=""
-key_found=0
 ignore=0
-
-IFS='.' read -r -a keys <<< "$key_path"
-for key in "${keys[@]}"; do
-    echo "$key"
-done
+key_found=0
+current_path_index=0
 
 while IFS= read -r -n 1 char; do
     buffer+="$char"
-
-    for key in "${keys[@]}"; do
-        if [[ "$buffer" =~ \"$key\"[[:space:]]*: ]]; then
-            key_found=1
-
-            for ((i = 0; i < ${#buffer}; i++)); do
-                substring="${buffer:i}"
-                if [[ "$substring" == \"${key}\"* ]]; then
-                    buffer="$substring"
-                    break
-                fi
-            done
-
-                while IFS= read -r -n 1 char_after; do
+    
+    current_key="${path_parts[$current_path_index]}"
+    
+    if [[ "$buffer" =~ \"$current_key\"[[:space:]]*: ]]; then
+        key_found=1
+        ((current_path_index++))
+        
+        for ((i = 0; i < ${#buffer}; i++)); do
+            substring="${buffer:i}"
+            if [[ "$substring" == \"${current_key}\"* ]]; then
+                buffer="$substring"
+                break
+            fi
+        done
+        
+        if [ "$current_path_index" -eq "${#path_parts[@]}" ]; then
+            while IFS= read -r -n 1 char_after; do
                 buffer+="$char_after"
-
+                
                 if [ "$char_after" == '{' ] || [ "$char_after" == '[' ]; then
                     ((ignore++))
                 elif [ "$char_after" == '}' ] || [ "$char_after" == ']' ]; then
                     ((ignore--))
-                    if [ "$ignore" -eq 0 ]; then
-                        echo "$buffer"
-                        exit 0
-                    fi
                 fi
-
-                if [[ "$char_after" == '}' || "$char_after" == ',' || "$char_after" == ']' ]]; then
-                    if [ "$ignore" -eq 0 ]; then
-                        echo "$buffer"
-                        exit 0
-                    fi
+                
+                if [ "$ignore" -eq 0 ] && [[ "$char_after" == ',' || "$char_after" == '}' || "$char_after" == ']' ]]; then
+                    echo "$buffer"
+                    exit 0
                 fi
             done
         fi
-    done
+    fi
 done < "$json_file"
 
 if [[ $key_found -eq 0 ]]; then
-    echo "Key not found: $key_path"
+    echo "Key not found: $path"
     exit 1
 fi
