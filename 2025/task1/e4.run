@@ -15,36 +15,51 @@ help_function() {
     -h            Help (this message)."
 }
 
+file_found=false
 
-main (){
-
+main () {
 local dir="$1"
+local depth="$2"
+
+depth=$((depth + 1))
+
+if [ -n "$L_value" ]; then
+    if [ "$depth" -gt "$L_value" ]; then
+        return
+    fi
+fi
+
 for file in "$dir"/* "$dir"/.*; do
 
     if [ -d "$file" ]; then
         if [ "$d_flag" = true ] || [ "$f_flag" = true ] || [ "$a_flag" = true ]; then
             if [ "$f_flag" = true ]; then
+                if [[ -L "$file" && "$l_flag" = false ]]; then
+                    continue
+                fi
                 echo "$file"
-                main "$file"
+                main "$file" "$depth"
             else
+                if [[ -L "$file" && "$l_flag" = false ]]; then
+                    continue
+                fi
                 echo "${file##*/}"
-                main "$file"
+                main "$file" "$depth"
             fi
         fi
 
     elif [ -f "$file" ]; then
+        file_found=true
         if [ "$a_flag" = true ] || [[ "$f_flag" = true && "$d_flag" = false ]]; then
             if [ "$f_flag" = true ]; then
                 echo "$file"
-                main "$file"
+                main "$file" "$depth"
             else
                 echo "${file##*/}"
-                main "$file"
+                main "$file" "$depth"
             fi
         fi
     fi
-
-        # else we only print not hidden files and no dir
 done
 }
 
@@ -64,66 +79,6 @@ default() {
     done
 }
 
-a_flag_function() {
-    local dir="$1"
-    echo "$dir"
-    for file in "$dir"/* "$dir"/.*; do
-
-        if [ -L "$file" ]; then
-            continue
-        fi
-
-        if [ -f "$file" ]; then
-            echo "${file##*/}"
-        elif [ -d "$file" ]; then
-            a_flag_function "$file"
-        fi
-    done
-}
-
-d_flag_function() {
-    local dir="$1"
-    for file in "$dir"/* "$dir"/.*; do
-
-        if [ -L "$file" ]; then
-            continue
-        fi
-
-        if [ -d "$file" ]; then
-            echo "$file"
-            d_flag_function "$file"
-        fi
-    done
-}
-
-l_flag_function() {
-    local dir="$1"
-    for file in "$dir"/*; do
-
-        if [ -f "$file" ]; then
-            echo "${file##*/}"
-        elif [ -d "$file" ]; then
-            l_flag_function "$file"
-        fi
-    done
-}
-
-f_flag_function() {
-    local dir="$1"
-    for file in "$dir"/*; do
-
-        if [ -L "$file" ]; then
-            continue
-        fi
-
-        if [ -f "$file" ]; then
-            echo "$file"
-        elif [ -d "$file" ]; then
-            f_flag_function "$file"
-        fi
-    done
-}
-
 if [ "$#" -eq 0 ]; then
     help_function
     exit 1
@@ -137,6 +92,13 @@ if [ ! -e "$path" ]; then
 elif [ ! -d "$path" ]; then
     echo "Path: $path is not a directory"
     exit 1
+fi
+
+if [ "$#" -eq 1 ]; then
+    for file in "$path"; do
+        default "$file"
+        exit 0
+    done
 fi
 
 a_flag=false
@@ -157,7 +119,7 @@ while [[ "$#" -gt 1 ]]; do
                 a) a_flag=true ;;
                 d) d_flag=true ;;
                 l) l_flag=true ;;
-                f) f_flag=true ;;
+                f) f_flag=true;;
                 L) 
                     if [[ "$#" -gt 2 && ! "$3" =~ ^- ]]; then
                         L_value="$3"
@@ -203,34 +165,9 @@ while [[ "$#" -gt 1 ]]; do
     fi
 done
 
-main "$path"
-exit 0
+main "$path" 0
 
-if [ "$a_flag" = true ]; then
-    a_flag_function "$path"
-    exit 0
+if [ "$file_found" = false ]; then
+    echo "No files were found in the $path directory."
+    exit 1
 fi
-
-if [ "$d_flag" = true ]; then
-    d_flag_function "$path"
-    exit 0
-fi
-
-if [ "$l_flag" = true ]; then
-    l_flag_function "$path"
-    exit 0
-fi
-
-if [ "$f_flag" = true ]; then
-    f_flag_function "$path"
-    exit 0
-fi
-
-unset file_found
-
-for file in "$path"; do
-    default "$file"
-    exit 0
-done
-
-echo "No files were found in the $path directory."
