@@ -15,6 +15,35 @@ help_function() {
     -h            Help (this message)."
 }
 
+print_files_recursively() {
+    local dir="$1"
+    echo "$dir"
+    for item in "$dir"/* "$dir"/.*; do
+        if [ -f "$item" ]; then
+            echo "$item"
+        elif [ -d "$item" ]; then
+            print_files_recursively "$item"
+        fi
+    done
+}
+
+d_flag_function() {
+    local dir="$1"
+    echo "$dir"  # Print the current directory
+
+    for file in "$dir"/* "$dir"/.*; do
+        # Skip the special entries "." and ".."
+        if [ "$file" = "$dir/." ] || [ "$file" = "$dir/.." ]; then
+            continue
+        fi
+
+        if [ -d "$file" ]; then
+            echo "$file"  # Print the subdirectory
+            d_flag_function "$file"  # Recursively process subdirectories
+        fi
+    done
+}
+
 if [ "$#" -eq 0 ]; then
     help_function
     exit 1
@@ -24,6 +53,10 @@ path=$1
 
 if [ ! -e "$path" ]; then
     echo "Path: $path does not exist"
+    exit 1
+elif [ ! -d "$path" ]; then
+    echo "Path: $path is not a directory"
+    exit 1
 fi
 
 a_flag=false
@@ -65,7 +98,9 @@ while [[ "$#" -gt 1 ]]; do
                         exit 1
                     fi
                     ;;
-                h) h_flag=true ;;
+                h) h_flag=true # We do not need this anymore
+                    help_function
+                    exit 0 ;;
                 I) 
                     if [[ "$#" -gt 2 && ! "$3" =~ ^- ]]; then
                         I_value="$3"
@@ -99,13 +134,32 @@ echo "P_value: $P_value"
 echo "I_value: $I_value"
 echo "h_flag: $h_flag"
 
-if [ -d "$path" ]; then # Check if $path is a directory
-    for file in "$path"/*; do
-        if [ -f "$file" ]; then
-            echo "$file"
+
+if [ "$a_flag" = true ]; then
+    for file in "$path"/* "$path"/.*; do
+        if [ "$file" != "$path/." ] && [ "$file" != "$path/.." ]; then
+            print_files_recursively "$path"
+            exit 0
         fi
     done
-else
-    echo "$path is not a directory"
-    exit 1
+fi
+
+if [ "$d_flag" = true ]; then
+    d_flag_function "$path"
+    exit 0
+fi
+
+
+
+unset file_found
+
+for file in "$path"/*; do
+    if [ -f "$file" ]; then
+        echo "$file"
+        file_found=true
+    fi
+done
+
+if [ -z "$file_found" ]; then
+    echo "No files were found in the $path directory."
 fi
