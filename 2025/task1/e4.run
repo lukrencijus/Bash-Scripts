@@ -26,7 +26,7 @@ print_files_recursively() {
         fi
     done
 }
-
+#test
 d_flag_function() {
     local dir="$1"
     echo "$dir"  # Print the current directory
