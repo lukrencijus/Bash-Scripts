@@ -15,31 +15,78 @@ help_function() {
     -h            Help (this message)."
 }
 
-print_files_recursively() {
+default() {
     local dir="$1"
-    echo "$dir"
-    for item in "$dir"/* "$dir"/.*; do
-        if [ -f "$item" ]; then
-            echo "$item"
-        elif [ -d "$item" ]; then
-            print_files_recursively "$item"
+    for file in "$dir"/*; do
+
+        if [ -L "$file" ]; then
+            continue
+        fi
+
+        if [ -f "$file" ]; then
+            echo "${file##*/}"
+        elif [ -d "$file" ]; then
+            default "$file"
         fi
     done
 }
-#test
+
+a_flag_function() {
+    local dir="$1"
+    echo "$dir"
+    for file in "$dir"/* "$dir"/.*; do
+
+        if [ -L "$file" ]; then
+            continue
+        fi
+
+        if [ -f "$file" ]; then
+            echo "${file##*/}"
+        elif [ -d "$file" ]; then
+            a_flag_function "$file"
+        fi
+    done
+}
+
 d_flag_function() {
     local dir="$1"
-    echo "$dir"  # Print the current directory
-
     for file in "$dir"/* "$dir"/.*; do
-        # Skip the special entries "." and ".."
-        if [ "$file" = "$dir/." ] || [ "$file" = "$dir/.." ]; then
+
+        if [ -L "$file" ]; then
             continue
         fi
 
         if [ -d "$file" ]; then
-            echo "$file"  # Print the subdirectory
-            d_flag_function "$file"  # Recursively process subdirectories
+            echo "$file"
+            d_flag_function "$file"
+        fi
+    done
+}
+
+l_flag_function() {
+    local dir="$1"
+    for file in "$dir"/*; do
+
+        if [ -f "$file" ]; then
+            echo "${file##*/}"
+        elif [ -d "$file" ]; then
+            l_flag_function "$file"
+        fi
+    done
+}
+
+f_flag_function() {
+    local dir="$1"
+    for file in "$dir"/*; do
+
+        if [ -L "$file" ]; then
+            continue
+        fi
+
+        if [ -f "$file" ]; then
+            echo "$file"
+        elif [ -d "$file" ]; then
+            f_flag_function "$file"
         fi
     done
 }
@@ -67,7 +114,6 @@ L_value=""
 R_flag=false
 P_value=""
 I_value=""
-h_flag=false
 
 while [[ "$#" -gt 1 ]]; do
     if [[ "$2" =~ ^-([a-zA-Z]+)$ ]]; then
@@ -98,7 +144,7 @@ while [[ "$#" -gt 1 ]]; do
                         exit 1
                     fi
                     ;;
-                h) h_flag=true # We do not need this anymore
+                h)
                     help_function
                     exit 0 ;;
                 I) 
@@ -124,21 +170,10 @@ while [[ "$#" -gt 1 ]]; do
     fi
 done
 
-echo "a_flag: $a_flag"
-echo "d_flag: $d_flag"
-echo "l_flag: $l_flag"
-echo "f_flag: $f_flag"
-echo "L_value: $L_value"
-echo "R_flag: $R_flag"
-echo "P_value: $P_value"
-echo "I_value: $I_value"
-echo "h_flag: $h_flag"
-
-
 if [ "$a_flag" = true ]; then
     for file in "$path"/* "$path"/.*; do
         if [ "$file" != "$path/." ] && [ "$file" != "$path/.." ]; then
-            print_files_recursively "$path"
+            a_flag_function "$path"
             exit 0
         fi
     done
@@ -149,17 +184,21 @@ if [ "$d_flag" = true ]; then
     exit 0
 fi
 
+if [ "$l_flag" = true ]; then
+    l_flag_function "$path"
+    exit 0
+fi
 
+if [ "$f_flag" = true ]; then
+    f_flag_function "$path"
+    exit 0
+fi
 
 unset file_found
 
-for file in "$path"/*; do
-    if [ -f "$file" ]; then
-        echo "$file"
-        file_found=true
-    fi
+for file in "$path"; do
+    default "$file"
+    exit 0
 done
 
-if [ -z "$file_found" ]; then
-    echo "No files were found in the $path directory."
-fi
+echo "No files were found in the $path directory."
