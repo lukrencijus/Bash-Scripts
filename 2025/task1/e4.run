@@ -17,50 +17,60 @@ help_function() {
 
 file_found=false
 
-main () {
-local dir="$1"
-local depth="$2"
+main() {
+    local dir="$1"
+    local depth="$2"
 
-depth=$((depth + 1))
+    depth=$((depth + 1))
 
-if [ -n "$L_value" ]; then
-    if [ "$depth" -gt "$L_value" ]; then
-        return
-    fi
-fi
-
-for file in "$dir"/* "$dir"/.*; do
-
-    if [ -d "$file" ]; then
-        if [ "$d_flag" = true ] || [ "$f_flag" = true ] || [ "$a_flag" = true ]; then
-            if [ "$f_flag" = true ]; then
-                if [[ -L "$file" && "$l_flag" = false ]]; then
-                    continue
-                fi
-                echo "$file"
-                main "$file" "$depth"
-            else
-                if [[ -L "$file" && "$l_flag" = false ]]; then
-                    continue
-                fi
-                echo "${file##*/}"
-                main "$file" "$depth"
+    if [ -n "$L_value" ]; then
+        if [ "$depth" -gt "$L_value" ]; then
+            if [ "$R_flag" = true ]; then
+                for file in "$dir"/* "$dir"/.*; do
+                    if [ -d "$file" ]; then
+                        if [[ -L "$file" && "$l_flag" = false ]]; then
+                            continue
+                        fi
+                        main "$file" 0
+                    fi
+                done
             fi
-        fi
-
-    elif [ -f "$file" ]; then
-        file_found=true
-        if [ "$a_flag" = true ] || [[ "$f_flag" = true && "$d_flag" = false ]]; then
-            if [ "$f_flag" = true ]; then
-                echo "$file"
-                main "$file" "$depth"
-            else
-                echo "${file##*/}"
-                main "$file" "$depth"
-            fi
+            return
         fi
     fi
-done
+
+    for file in "$dir"/* "$dir"/.*; do
+
+        if [ -d "$file" ]; then
+            if [ "$d_flag" = true ] || [ "$f_flag" = true ] || [ "$a_flag" = true ]; then
+                if [ "$f_flag" = true ]; then
+                    if [[ -L "$file" && "$l_flag" = false ]]; then
+                        continue
+                    fi
+                    echo "$file"
+                    main "$file" "$depth"
+                else
+                    if [[ -L "$file" && "$l_flag" = false ]]; then
+                        continue
+                    fi
+                    echo "${file##*/}"
+                    main "$file" "$depth"
+                fi
+            fi
+
+        elif [ -f "$file" ]; then
+            file_found=true
+            if [ "$a_flag" = true ] || [[ "$f_flag" = true && "$d_flag" = false ]]; then
+                if [ "$f_flag" = true ]; then
+                    echo "$file"
+                    main "$file" "$depth"
+                else
+                    echo "${file##*/}"
+                    main "$file" "$depth"
+                fi
+            fi
+        fi
+    done
 }
 
 default() {
@@ -72,11 +82,19 @@ default() {
         fi
 
         if [ -f "$file" ]; then
+            file_found=true
             echo "${file##*/}"
         elif [ -d "$file" ]; then
             default "$file"
         fi
     done
+}
+
+check() {
+    if [ "$file_found" = false ]; then
+        echo "No files were found in the $path directory."
+        exit 1
+    fi
 }
 
 if [ "$#" -eq 0 ]; then
@@ -97,6 +115,7 @@ fi
 if [ "$#" -eq 1 ]; then
     for file in "$path"; do
         default "$file"
+        check
         exit 0
     done
 fi
@@ -167,7 +186,4 @@ done
 
 main "$path" 0
 
-if [ "$file_found" = false ]; then
-    echo "No files were found in the $path directory."
-    exit 1
-fi
+check
