@@ -1,0 +1,4 @@
+2023-01-01 INFO User1 Login
+2023-01-01 ERROR User2 Logout
+2023-01-02 INFO User1 Login
+2023-01-02 INFO User3 Login

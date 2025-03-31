@@ -146,10 +146,10 @@ fi
 path=$1
 
 if [ ! -e "$path" ]; then
-    echo "Path: $path does not exist"
+    echo "Path $path does not exist"
     exit 1
 elif [ ! -d "$path" ]; then
-    echo "Path: $path is not a directory"
+    echo "Path $path is not a directory"
     exit 1
 fi
 
