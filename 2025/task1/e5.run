@@ -19,18 +19,48 @@ if [ ! -f "$file" ]; then
 	exit 1
 fi
 
-# Should only update if file change is found
+check () {
+    updated_full_file=$(<"$file")
+    if [ "$original_full_file" != "$updated_full_file" ]; then
+        echo
+        echo "Elapsed time: $SECONDS seconds"
+        echo "File change found:"
+        original_full_file="$updated_full_file"
+        printing
+    fi
+}
 
-# in columns and not rows we must find unique values
+printing () {
+    mapfile -t lines < "$file"   
+    for ((i=$value; i<0; i++)); do
+        echo "${lines[$i]}"
+    done
+}
 
-
-
-# Read first line, see how many columns we have, only then start analyzing
-
-# value means how many recent lines program shows
+waiting () {
+    echo
+    echo "Waiting for new file changes..."
+    echo "Use Ctrl+C to stop"
+    while [ true ]; do
+        check
+    done
+}
 
 while IFS= read -r line || [ -n "$line" ]; do
-    echo "$line"
-    eval "array=($line)"
-    # go through every first array item ant compare if unique
+    (( rows++ ))
 done < "$file"
+
+if [ "$value" -gt "$rows" ]; then
+    echo "Entered numeric_value is greater than file's row count"
+    exit 1
+fi
+
+value=$((value * -1))
+original_full_file=$(<"$file")
+
+# read -r first_line < "$file"
+# eval "array=($first_line)"
+# first_line_columns=${#array[@]}
+
+printing
+waiting
