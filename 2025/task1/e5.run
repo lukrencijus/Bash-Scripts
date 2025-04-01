@@ -25,16 +25,19 @@ check () {
         echo
         echo "Elapsed time: $SECONDS seconds"
         echo "File change found:"
-        original_full_file="$updated_full_file"
         printing
+        original_full_file="$updated_full_file"
     fi
 }
 
 printing () {
+    result=""
     mapfile -t lines < "$file"   
     for ((i=$value; i<0; i++)); do
         echo "${lines[$i]}"
+        result+="${lines[$i]}"$'\n'
     done
+    columns "$result"
 }
 
 waiting () {
@@ -43,6 +46,34 @@ waiting () {
     echo "Use Ctrl+C to stop"
     while [ true ]; do
         check
+        read -t 1 < /dev/null
+    done
+}
+
+columns() {
+    local numeric_file="$1"
+    local -a strings=()
+    local col_count=0
+    
+    while IFS= read -r line; do
+        eval "row=($line)"
+        strings+=("${row[@]}")
+        if [ $col_count -eq 0 ]; then
+            col_count=${#row[@]}
+        fi
+    done <<< "$numeric_file"
+
+    for ((col=0; col<col_count; col++)); do
+        echo "Column $((col+1)) frequencies:"
+        declare -A freq=()
+        for ((i=col; i<${#strings[@]}; i+=col_count)); do
+            ((freq[${strings[$i]}]++))
+        done
+
+        for string in "${!freq[@]}"; do
+            echo "    $string: ${freq[$string]}"
+        done
+        echo "---------------------"
     done
 }
 
@@ -57,10 +88,6 @@ fi
 
 value=$((value * -1))
 original_full_file=$(<"$file")
-
-# read -r first_line < "$file"
-# eval "array=($first_line)"
-# first_line_columns=${#array[@]}
 
 printing
 waiting
