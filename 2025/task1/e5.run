@@ -33,6 +33,8 @@ check () {
         echo "File change found:"
         printing
         original_full_file="$updated_full_file"
+        echo "Waiting for new file changes..."
+        echo "Use Ctrl+C to stop"
     fi
 
     last_check_time=$SECONDS

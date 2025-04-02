@@ -38,8 +38,8 @@ main() {
             fi
 
             if [ "$d_flag" = true ] || [ "$f_flag" = true ] || [ "$a_flag" = true ]; then
-                if [[ "$f_flag" = true && "$a_flag" = false ]]; then
-                    break 2
+                if [[ "$f_flag" = true && "$a_flag" = false && "$d_flag" = false ]]; then
+                    break 1
                 elif [ "$f_flag" = true ]; then
                     echo "$file"
                 else

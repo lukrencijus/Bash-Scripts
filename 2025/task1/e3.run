@@ -3,6 +3,7 @@ PATH=.
 
 if [ "$#" -ne 3 ]; then
     echo "Usage:"
+    echo "-k for is for <keys> and -d for <data>"
     echo "Example 1: $0 <file.json> -k <person>"
     echo "Example 2: $0 <file.json> -k <person.name>"
     echo "Example 3: $0 <file.json> -d <data>"

@@ -15,12 +15,9 @@ fi
 file="$1"
 rows=-1
 
-echo "FILE:"
 while IFS= read -r line || [ -n "$line" ]; do
     (( rows++ ))
-    echo "$line"
 done < "$file"
-echo
 
 echo "ROWS:"
 echo "Number of rows (excluding the header row): $rows"
@@ -31,6 +28,7 @@ rows=-1
 echo "COLUMNS:"
 while IFS= read -r line || [ -n "$line" ]; do
     (( rows++ ))
+    line="${line//,/}"
     eval "array=($line)"
     current_columns=${#array[@]}
 
@@ -52,6 +50,7 @@ echo
 echo "STATISTICS:"
 while IFS= read -r line || [ -n "$line" ]; do
     (( rows++ ))
+    line="${line//,/}"
     eval "array=($line)"
     current_columns=${#array[@]}
     
