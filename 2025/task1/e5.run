@@ -26,13 +26,20 @@ check () {
         return
     fi
 
-    updated_full_file=$(<"$file")
-    if [ "$original_full_file" != "$updated_full_file" ]; then
+    mapfile -t lines < "$file"
+    updated_selected_lines=""
+    for ((i=$value; i<0; i++)); do
+        updated_selected_lines+="${lines[$i]}"$'\n'
+    done
+
+    if [ "$original_selected_lines" != "$updated_selected_lines" ]; then
+        echo
+        echo
         echo
         echo "Elapsed time: $SECONDS seconds"
         echo "File change found:"
         printing
-        original_full_file="$updated_full_file"
+        original_selected_lines="$updated_selected_lines"
         echo "Waiting for new file changes..."
         echo "Use Ctrl+C to stop"
     fi
@@ -97,7 +104,12 @@ if [ "$value" -gt "$rows" ]; then
 fi
 
 value=$((value * -1))
-original_full_file=$(<"$file")
+mapfile -t lines < "$file"
+
+original_selected_lines=""
+for ((i=$value; i<0; i++)); do
+    original_selected_lines+="${lines[$i]}"$'\n'
+done
 last_check_time=0
 
 printing
