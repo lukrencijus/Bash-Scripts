@@ -19,9 +19,10 @@ file_found=false
 
 main() {
     local dir="$1"
-    local depth="$2"
+    local depth="${2:-0}"
 
     depth=$((depth + 1))
+    local indentation=$(printf "%*s" $((depth * 4)) "")
 
     for file in "$dir"/* "$dir"/.*; do
 
@@ -41,9 +42,9 @@ main() {
                 if [[ "$f_flag" = true && "$a_flag" = false && "$d_flag" = false ]]; then
                     break 1
                 elif [ "$f_flag" = true ]; then
-                    echo "$file"
+                    echo "${indentation}$file"
                 else
-                    echo "${file##*/}"
+                    echo "${indentation}${file##*/}"
                 fi
             fi
 
@@ -59,26 +60,26 @@ main() {
                 if [ "$f_flag" = true ]; then
                     if [ -n "$P_value" ]; then
                         if [[ "$file" == *"$P_value"* ]]; then
-                            echo "$file"
+                            echo "${indentation}$file"
                         fi
                     elif [ -n "$I_value" ]; then
                         if [[ "$file" != *"$I_value"* ]]; then
-                            echo "$file"
+                            echo "${indentation}$file"
                         fi
                     else
-                        echo "$file"
+                        echo "${indentation}$file"
                     fi
                 else
                     if [ -n "$P_value" ]; then
                         if [[ "$file" == *"$P_value"* ]]; then
-                            echo "${file##*/}"
+                            echo "${indentation}${file##*/}"
                         fi
                     elif [ -n "$I_value" ]; then
                         if [[ "$file" != *"$I_value"* ]]; then
-                            echo "${file##*/}"
+                            echo "${indentation}${file##*/}"
                         fi
                     else
-                        echo "${file##*/}"
+                        echo "${indentation}${file##*/}"
                     fi
                 fi
             fi
@@ -91,6 +92,11 @@ default() {
     local f_flag="$2"
     local P_value="$3"
     local I_value="$4"
+    local depth="${5:-0}"
+
+    depth=$((depth + 1))
+
+    local indentation=$(printf "%*s" $((depth * 4)) "")
 
     for file in "$dir"/*; do
 
@@ -103,30 +109,30 @@ default() {
             if [ "$f_flag" = true ]; then
                 if [ -n "$P_value" ]; then
                     if [[ "$file" == *"$P_value"* ]]; then
-                        echo "$file"
+                        echo "${indentation}$file"
                     fi
                 elif [ -n "$I_value" ]; then
                     if [[ "$file" != *"$I_value"* ]]; then
-                        echo "$file"
+                        echo "${indentation}$file"
                     fi
                 else
-                    echo "$file"
+                    echo "${indentation}$file"
                 fi
             else
                 if [ -n "$P_value" ]; then
                     if [[ "$file" == *"$P_value"* ]]; then
-                        echo "${file##*/}"
+                        echo "${indentation}${file##*/}"
                     fi
                 elif [ -n "$I_value" ]; then
                     if [[ "$file" != *"$I_value"* ]]; then
-                        echo "${file##*/}"
+                        echo "${indentation}${file##*/}"
                     fi
                 else
-                    echo "${file##*/}"
+                    echo "${indentation}${file##*/}"
                 fi
             fi
         elif [ -d "$file" ]; then
-            default "$file" "$f_flag" "$P_value" "$I_value"
+            default "$file" "$f_flag" "$P_value" "$I_value" "$depth"
         fi
     done
 }

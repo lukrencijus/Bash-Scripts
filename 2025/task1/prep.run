@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+PATH=.
+
+depth=3
+
+# Generate indentation based on depth
+indentation=$(printf "%*s" $((depth * 4)) "")
+
+# Print the result
+echo "Depth: $depth"
+echo "${indentation}word"
