@@ -24,6 +24,11 @@ main() {
     depth=$((depth + 1))
     local indentation=$(printf "%*s" $((depth * 4)) "")
 
+    if [ ! -r "$dir" ] || [ ! -x "$dir" ]; then
+        echo "${indentation}[error opening dir]"
+        return 1
+    fi
+
     for file in "$dir"/* "$dir"/.*; do
 
         if [ -d "$file" ]; then
@@ -97,6 +102,11 @@ default() {
     depth=$((depth + 1))
 
     local indentation=$(printf "%*s" $((depth * 4)) "")
+
+    if [ ! -r "$dir" ] || [ ! -x "$dir" ]; then
+        echo "${indentation}[error opening dir]"
+        return 1
+    fi
 
     for file in "$dir"/*; do
 
